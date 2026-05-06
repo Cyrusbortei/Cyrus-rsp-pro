@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPS Simultaneous | Cyrus Tech</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 15px;
+      color: white;
+    }
+.game {
+      background: rgba(255,255,255,0.1);
+      padding: 25px;
+      border-radius: 20px;
+      backdrop-filter: blur(15px);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    h1 { font-size: 24px; margin-bottom: 5px; }
+.brand { font-size: 11px; opacity: 0.8; margin-bottom: 15px; }
+.mode-select {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+.mode-btn {
+      flex: 1;
+      padding: 12px 5px;
+      background: rgba(0,0,0,0.3);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+    }
+.mode-btn.active {
+      background: #00ff88;
+      color: #1c1e21;
+      border-color: white;
+    }
+.score-board {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+.score {
+      background: rgba(0,0,0,0.3);
+      padding: 10px 12px;
+      border-radius: 10px;
+      min-width: 70px;
+      position: relative;
+      border: 2px solid transparent;
+    }
+.score h3 { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+.score span { font-size: 24px; font-weight: bold; }
+.score.locked { border-color: #00ff88; }
+.score.current { border-color: #ffd32a; box-shadow: 0 0 10px rgba(255,211,42,0.5); }
+.score.crown::after {
+      content: '👑';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 18px;
+    }
+.players-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+.player-panel {
+      background: rgba(0,0,0,0.2);
+      padding: 12px 8px;
+      border-radius: 12px;
+      border: 2px solid transparent;
+    }
+.player-panel.active { border-color: #ffd32a; }
+.player-panel.locked { border-color: #00ff88; background: rgba(0,255,136,0.1); }
+.player-name { font-size: 12px; font-weight: bold; margin-bottom: 8px; }
+.player-choice { font-size: 28px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.player-status { font-size: 10px; opacity: 0.8; margin-top: 5px; }
+.choices {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+.choice {
+      width: 65px;
+      height: 65px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 3px solid transparent;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+.choice:active { transform: scale(0.9); }
+.choice:hover { border-color: #ffd32a; transform: scale(1.1); }
+.choice.disabled { opacity: 0.4; pointer-events: none; }
+.result {
+      background: rgba(0,0,0,0.3);
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      min-height: 100px;
+    }
+    #result-text { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+    #hands { font-size: 15px; opacity: 0.95; margin-bottom: 8px; line-height: 1.6; }
+    #status-text { font-size: 13px; opacity: 0.8; }
+    #round-info { font-size: 12px; color: #ffd32a; margin-top: 5px; font-weight: bold; }
+.reset-btn {
+      background: #ff4757;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      font-size: 14px;
+    }
+.footer { margin-top: 15px; font-size: 10px; opacity: 0.7; }
+.win { color: #00ff88; }
+.lose { color: #ff4757; }
+.draw { color: #ffd32a; }
+.champion-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+.champion-screen.show { display: flex; }
+.trophy { font-size: 120px; animation: bounce 1s infinite; }
+.champion-name { font-size: 32px; margin: 15px 0; color: #ffd32a; font-weight: bold; }
+.champion-text { font-size: 16px; margin-bottom: 25px; }
+.champion-btn {
+      background: #00ff88;
+      color: #1c1e21;
+      padding: 14px 40px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1>RPS SIMULTANEOUS</h1>
+    <div class="brand">CYRUS TECH - NO CHEATING</div>
+
+    <div class="mode-select">
+      <button class="mode-btn active" onclick="setMode('cpu')">VS Computer</button>
+      <button class="mode-btn" onclick="setMode('3p')">3 Players</button>
+    </div>
+
+    <div class="score-board" id="scoreBoard"></div>
+
+    <div class="players-grid" id="playersGrid"></div>
+
+    <div class="result">
+      <div id="result-text">Select mode to start!</div>
+      <div id="hands"></div>
+      <div id="status-text">All players pick at the same time</div>
+      <div id="round-info">Best of 5 - First to 3 wins</div>
+    </div>
+
+    <div class="choices" id="choices">
+      <button class="choice" onclick="makeChoice('rock')">✊</button>
+      <button class="choice" onclick="makeChoice('paper')">✋</button>
+      <button class="choice" onclick="makeChoice('scissors')">✌️</button>
+    </div>
+
+    <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+
+    <div class="footer">
+      Built by Cyrus Bortei | 500 GHS Fair Play System
+    </div>
+  </div>
+
+  <div class="champion-screen" id="championScreen">
+    <div class="trophy">🏆</div>
+    <div class="champion-name" id="championName">Player 1</div>
+    <div class="champion-text">TOURNAMENT CHAMPION!</div>
+    <button class="champion-btn" onclick="closeChampion()">New Game</button>
+  </div>
+
+  <script>
+    let mode = 'cpu';
+    let matchWins = { p1: 0, p2: 0, p3: 0, cpu: 0 };
+    let choices = { p1: '', p2: '', p3: '', cpu: '' };
+    let locked = { p1: false, p2: false, p3: false, cpu: false };
+    let currentPlayer = 'p1';
+    let playersInGame = 1;
+    let roundActive = true;
+
+    const emojis = { rock: '✊', paper: '✋', scissors: '✌️' };
+    const playerNames = { p1: 'Player 1', p2: 'Player 2', p3: 'Player 3', cpu: 'Computer' };
+
+    function setMode(newMode) {
+      mode = newMode;
+      resetGame();
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      playersInGame = mode === 'cpu'? 1 : 3;
+      updateUI();
+    }
+
+    function updateUI() {
+      // Update score board
+      const board = document.getElementById('scoreBoard');
+      board.innerHTML = '';
+      const playersToShow = mode === 'cpu'? ['p1', 'cpu'] : ['p1', 'p2', 'p3'];
+      
+      playersToShow.forEach(p => {
+        const isChampion = matchWins[p] >= 3;
+        board.innerHTML += `
+          <div class="score ${locked[p]? 'locked' : ''} ${currentPlayer === p? 'current' : ''} ${isChampion? 'crown' : ''}" id="score-${p}">
+            <h3>${playerNames[p].replace('Player ', 'P')}</h3>
+            <span>${matchWins[p]}</span>
+          </div>`;
+      });
+
+      // Update player panels for 3P mode
+      if (mode === '3p') {
+        const grid = document.getElementById('playersGrid');
+        grid.innerHTML = '';
+        ['p1', 'p2', 'p3'].forEach(p => {
+          grid.innerHTML += `
+            <div class="player-panel ${locked[p]? 'locked' : currentPlayer === p? 'active' : ''}">
+              <div class="player-name">${playerNames[p]}</div>
+              <div class="player-choice">${locked[p]? '🔒' : '?'}</div>
+              <div class="player-status">${locked[p]? 'Locked' : 'Choosing...'}</div>
+            </div>`;
+        });
+      } else {
+        document.getElementById('playersGrid').innerHTML = '';
+      }
+
+      // Enable/disable choices based on turn
+      const choiceBtns = document.querySelectorAll('.choice');
+      choiceBtns.forEach(btn => {
+        if (mode === '3p' && locked[currentPlayer]) {
+          btn.classList.add('disabled');
+        } else {
+          btn.classList.remove('disabled');
+        }
+      });
+    }
+
+    function makeChoice(choice) {
+      if (!roundActive) return;
+
+      if (mode === 'cpu') {
+        choices.p1 = choice;
+        choices.cpu = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
+        locked.p1 = locked.cpu = true;
+        revealAndCalculate();
+      } else {
+        // 3 Players mode - simultaneous
+        if (locked[currentPlayer]) return;
+        
+        choices[currentPlayer] = choice;
+        locked[currentPlayer] = true;
+        
+        // Check if all players locked in
+        const allLocked = ['p1', 'p2', 'p3'].every(p => locked[p]);
+        
+        if (allLocked) {
+          revealAndCalculate();
+        } else {
+          // Move to next player
+          currentPlayer = currentPlayer === 'p1'? 'p2' : currentPlayer === 'p2'? 'p3' : 'p1';
+          document.getElementById('status-text').innerText = `${playerNames[currentPlayer]}: Your turn now`;
+        }
+      }
+      
+      updateUI();
+    }
+
+    function revealAndCalculate() {
+      roundActive = false;
+      
+      let activePlayers, activeChoices;
+      
+      if (mode === 'cpu') {
+        activePlayers = ['p1', 'cpu'];
+        activeChoices = [choices.p1, choices.cpu];
+      } else {
+        activePlayers = ['p1', 'p2', 'p3'];
+        activeChoices = activePlayers.map(p => choices[p]);
+      }
+
+      // Show all choices
+      const handsText = activePlayers.map((p, i) => 
+        `${playerNames[p]} ${emojis[activeChoices[i]]}`
+      ).join(' vs ');
+      document.getElementById('hands').innerText = handsText;
+
+      // Calculate winner
+      const winner = getWinner(activeChoices, activePlayers);
+      
+      if (winner === 'draw') {
+        document.getElementById('result-text').innerText = "DRAW! Rematch Round";
+        document.getElementById('result-text').className = 'draw';
+      } else {
+        matchWins[winner]++;
+        document.getElementById('result-text').innerText = `${playerNames[winner]} WINS ROUND!`;
+        document.getElementById('result-text').className = winner === 'p1'? 'win' : 'lose';
+        
+        // Check for champion
+        if (matchWins[winner] >= 3) {
+          setTimeout(() => showChampion(winner), 1500);
+          return;
+        }
+      }
+      
+      // Auto-reset for next round after 3 seconds
+      setTimeout(newRound, 3000);
+      updateUI();
+    }
+
+    function getWinner(choicesArr, playersArr) {
+      if (choicesArr.length === 2) {
+        const [c1, c2] = choicesArr;
+        if (c1 === c2) return 'draw';
+        const beats = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+        return beats[c1] === c2? playersArr[0] : playersArr[1];
+      }
+      
+      // 3 Players logic
+      const unique = [...new Set(choicesArr)];
+      if (unique.length === 1) return 'draw'; // All same
+      if (unique.length === 3) return 'draw'; // Rock, Paper, Scissors
+      
+      const beats = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+      let winners = [];
+      
+      for (let i = 0; i < choicesArr.length; i++) {
+        let current = choicesArr[i];
+        let beatenByCount = 0;
+        for (let j = 0; j < choicesArr.length; j++) {
+          if (i!== j && beats[choicesArr[j]] === current) beatenByCount++;
+        }
+        if (beatenByCount === 0) winners.push(playersArr[i]);
+      }
+      
+      return winners.length === 1? winners[0] : 'draw';
+    }
+
+    function newRound() {
+      choices = { p1: '', p2: '', p3: '', cpu: '' };
+      locked = { p1: false, p2: false, p3: false, cpu: false };
+      currentPlayer = 'p1';
+      roundActive = true;
+      document.getElementById('result-text').innerText = 'New Round!';
+      document.getElementById('result-text').className = '';
+      document.getElementById('hands').innerText = '';
+      document.getElementById('status-text').innerText = 'All players pick at the same time';
+      updateUI();
+    }
+
+    function showChampion(winner) {
+      document.getElementById('championName').innerText = playerNames[winner];
+      document.getElementById('championScreen').classList.add('show');
+    }
+
+    function closeChampion() {
+      document.getElementById('championScreen').classList.remove('show');
+      resetGame();
+    }
+
+    function resetGame() {
+      matchWins = { p1: 0, p2: 0, p3: 0, cpu: 0 };
+      newRound();
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
